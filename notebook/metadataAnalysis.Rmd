@@ -1,0 +1,146 @@
+---
+title: "SARS-CoV-2 GISAID Data Analysis"
+author: "K. Bodie Weedop"
+date: "12/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ape)
+library(usmap)
+library(ggplot2)
+library(seqinr)
+```
+
+```{r, echo=FALSE}
+wash_fips <- c(53001, 53003, 53005, 53007, 53009, 53011, 53013, 53015, 53017, 53019, 53021, 53023, 53025, 53027, 53029, 53031, 53033, 53035, 53037, 53039, 53041, 53043, 53045, 53047, 53049, 53051, 53053, 53055, 53057, 53059, 53061, 53063, 53065, 53067, 53069, 53071, 53073, 53075, 53077)
+wash_counties <- c("Adams", "Asotin", "Benton", "Chelan", "Clallam", "Clark", "Columbia", "Cowlitz", "Douglas", "Ferry", "Franklin", "Garfield", "Grant", "Grays Harbor", "Island", "Jefferson", "King", "Kitsap", "Kittitas", "Klickitat", "Lewis", "Lincoln", "Mason", "Okanogan", "Pacific", "Pend Oreille", "Pierce", "San Juan", "Skagit", "Skamania", "Snohomish", "Spokane", "Stevens", "Thurston", "Wahkiakum", "Walla Walla", "Whatcom", "Whitman", "Yakima")
+wash_counties <- unlist(lapply(wash_counties, function(x) paste(x, "County")))
+```
+
+```{r gisaidData}
+metadata <- (
+  read.table(file = "../data/rawData/gisaid_hcov-19_2020_12_11_19.tsv", 
+             sep = "\t", 
+             header = TRUE, 
+             stringsAsFactors = FALSE)
+)
+
+containsCounty <- c()
+counties <- c()
+gisaid_accessions <- c()
+for (i in 1:nrow(metadata)) {
+  locationLength <- length(strsplit(metadata$Location[i], split = "/")[[1]])
+  splitLocation <- strsplit(metadata$Location[i], split = "/")[[1]]
+  if (locationLength > 3) {
+    containsCounty <- c(containsCounty, i)
+    counties <- c(counties, splitLocation[4])
+  }
+}
+counties <- trimws(counties)
+
+dataPerCounty <- left_join(data.frame(table(counties)), 
+                           data.frame("counties" = wash_counties, "fips" = wash_fips), 
+                           by = "counties")
+#dataPerCounty[-which(is.na(dataPerCounty$fips)), ]
+plot_usmap("county", include = "WA", data = dataPerCounty[, -1], values = "Freq") + 
+  labs(title = "GISAID Data by County", fill = "No. Of Sequences") +
+  theme(legend.position = "right")
+```
+
+```{r genbankData}
+metadata <- (
+  read.table(file = "../data/rawData/sequences.csv", 
+             sep = ",", 
+             header = TRUE, 
+             stringsAsFactors = FALSE)
+)
+
+containsCounty <- c()
+counties <- c()
+for (i in 1:nrow(metadata)) {
+  locationLength <- length(strsplit(metadata$Geo_Location[i], split = ",")[[1]])
+  splitLocation <- strsplit(metadata$Geo_Location[i], split = ",")[[1]]
+  if (locationLength > 1) {
+    containsCounty <- c(containsCounty, i)
+    counties <- c(counties, splitLocation[2])
+  }
+}
+
+counties <- trimws(counties)
+
+for (i in 1:length(counties)) {
+  tmp <- strsplit(counties[i], split = " ")[[1]][2]
+  if (tmp == "county") {
+    counties[i] <- paste(strsplit(counties[i], split = " ")[[1]][1], "County", sep = " ")
+  }
+}
+
+dataPerCounty <- left_join(data.frame(table(counties)), 
+                           data.frame("counties" = wash_counties, "fips" = wash_fips), 
+                           by = "counties")
+plot_usmap("county", include = "WA", data = dataPerCounty[, -1], values = "Freq") + 
+  labs(title = "GenBank Data by County", fill = "No. Of Sequences") +
+  theme(legend.position = "right")
+length(containsCounty)
+table(counties)
+```
+
+```{r}
+metadata$Release_Date <- as.Date(metadata$Release_Date)
+metadata$Collection_Date <- as.Date(metadata$Collection_Date)
+
+metadataSubset <- metadata[containsCounty, ]
+firstWave <- metadataSubset[which(metadataSubset$Collection_Date < as.Date("2020-09-01")), ]
+secondWave <- metadataSubset[which(metadataSubset$Collection_Date > as.Date("2020-09-01")), ]
+
+print(nrow(firstWave))
+print(nrow(secondWave))
+```
+
+```{r}
+# sequences <- read.GenBank(metadataSubset$Accession)
+# seqNames <- c()
+# for (i in 1:nrow(metadataSubset)) {
+#   tmpName <- paste(metadataSubset$Accession[i], counties[i], metadataSubset$Collection_Date[i], sep = "_")
+#   seqNames <- c(seqNames, gsub(x = tmpName, pattern = " ", replacement = ""))
+# }
+# names(sequences) <- seqNames
+# write.dna(sequences, file = "../data/rawData/genbankSequences.fasta", format = "fasta", colsep = "")
+sequences <- read.alignment(file = "../data/rawData/genbankSequences.fasta", format = "fasta")
+
+withAmbiguousChars <- c()
+counties <- c()
+for (i in seq_len(sequences$nb)) {
+  ambiguous <- "n" %in% s2c(sequences$seq[i][[1]])
+  if (ambiguous) {
+    withAmbiguousChars <- c(withAmbiguousChars, i)
+  } else {
+    counties <- c(counties, strsplit(sequences$nam[i], split = "_")[[1]][2])
+  }
+}
+
+noAmbiguous <- sequences$seq[-withAmbiguousChars]
+
+wash_fips <- c(53001, 53003, 53005, 53007, 53009, 53011, 53013, 53015, 53017, 53019, 53021, 53023, 53025, 53027, 53029, 53031, 53033, 53035, 53037, 53039, 53041, 53043, 53045, 53047, 53049, 53051, 53053, 53055, 53057, 53059, 53061, 53063, 53065, 53067, 53069, 53071, 53073, 53075, 53077)
+wash_counties <- c("Adams", "Asotin", "Benton", "Chelan", "Clallam", "Clark", "Columbia", "Cowlitz", "Douglas", "Ferry", "Franklin", "Garfield", "Grant", "Grays Harbor", "Island", "Jefferson", "King", "Kitsap", "Kittitas", "Klickitat", "Lewis", "Lincoln", "Mason", "Okanogan", "Pacific", "Pend Oreille", "Pierce", "San Juan", "Skagit", "Skamania", "Snohomish", "Spokane", "Stevens", "Thurston", "Wahkiakum", "Walla Walla", "Whatcom", "Whitman", "Yakima")
+wash_counties <- unlist(lapply(wash_counties, function(x) paste(x, "County", sep="")))
+
+dataPerCounty <- left_join(data.frame(table(counties)), 
+                           data.frame("counties" = wash_counties, "fips" = wash_fips), 
+                           by = "counties")
+plot_usmap("county", include = "WA", data = dataPerCounty[, -1], values = "Freq") + 
+  labs(title = "GenBank Data by County", fill = "No. Of Sequences") +
+  theme(legend.position = "right")
+print(length(counties))
+
+print(table(counties))
+#write.fasta(sequences = noAmbiguous, 
+#            names = sequences$nam[-withAmbiguousChars], 
+#            file.out = "../data/processedData/genbankSequences.noAmbiguous.fasta")
+```
+
+
+
