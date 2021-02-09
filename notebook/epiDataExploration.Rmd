@@ -1,8 +1,11 @@
 ---
 title: "washingtonStateEpiCurves"
-author: "K. Bodie Weedop"
-date: "2/4/2021"
-output: html_document
+date: "`r Sys.Date()`"
+author: K. Bodie Weedop
+output: 
+  bookdown::markdown_document2:
+    base_format: rmarkdown::md_document
+    variant: gfm
 ---
 
 ```{r setup, include=FALSE}
