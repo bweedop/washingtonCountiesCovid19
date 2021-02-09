@@ -2,11 +2,11 @@
 
 ECOL 8530 Group Project
 
-Brandi Celia
-Cody Dailey
-Lambodhar Damodaran
-Bodie Weedop
-Rachel Xu
+Brandi Celia  
+Cody Dailey  
+Lambodhar Damodaran  
+Bodie Weedop  
+Rachel Xu  
 
 
 This README.md will describe the directory structure and content of this repo and explicitly detail the protocol / workflow / pipeline for analyses and research products. 
