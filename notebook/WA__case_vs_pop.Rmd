@@ -1,0 +1,126 @@
+---
+title: "Washington_demographic_county"
+author: "Rachel Xu"
+date: "2/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Wrangling
+
+* Data downloaded from : https://www.census.gov/data/datasets/time-series/demo/popest/2010s-counties-total.html
+
+```{r}
+library(tidyverse)
+library(readxl) # have to install after tidyverse loaded
+library(magrittr)
+
+file_path <- "/Users/rachel/Desktop/ECOL8350Capstone/"
+
+```
+
+* Read Washington Population estimates at 2019 by county
+
+https://www.doh.wa.gov/Emergencies/COVID19/DataDashboard#downloads
+
+```{r}
+
+pop <- read_excel(paste0(file_path,"co-est2019-annres-53.xlsx"),trim_ws = TRUE)
+
+colnames(pop) <- c("county",pop[3,c(-1)])
+
+pop_2019 <- pop %>% slice(-c(1:4)) %>% 
+  select(c("county","2019")) %>% 
+  mutate(WA.counties = sapply(county,function(x){
+    unlist(strsplit(x,"\\, |\\,| |\\.", fixed = FALSE))[2]
+    })) %>% 
+  slice(-c(40:44)) %>%
+  rename(count = "2019") %>%
+  mutate(pop_percentage = count/sum(count)*100) %>% 
+  select(-c("county", "count")) 
+  
+  
+
+
+
+```
+
+
+* Read Washington's Total cases by county (accumulated)
+```{r}
+
+case <- read_excel(paste0(file_path, "WA_COVID19_Cases_Hospitalizations_Deaths.xlsx"))
+
+total_case_county <- case %>% group_by(County) %>% 
+  select("TotalCases") %>% 
+  summarise(count = sum(TotalCases)) %>% 
+  mutate(case_percentage = count/sum(count) * 100) %>%
+  mutate(WA.counties = sapply(County, function(x){
+  unlist(strsplit(x, " ", fixed = TRUE))[1]
+})) %>% 
+  select(-c("County", "count"))
+
+
+
+
+```
+## Plot Case Vs. Pop
+```{r}
+
+case_vs_pop <- merge(pop_2019, total_case_county)
+
+case_vs_pop_melt <- pivot_longer(case_vs_pop, c("pop_percentage","case_percentage") ,names_to = "Variables", values_to = "percentage")
+
+ggplot(case_vs_pop_melt, aes(x= WA.counties, y= percentage, fill=Variables))+
+  geom_bar(stat="identity", position="dodge") +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90,  vjust = 0.3))
+
+```
+
+### GISAID sequence metadata 2/9/2021
+
+* number of sequences available with county data 
+* plot by county and by date
+```{r}
+library(lubridate)
+library(plotly)
+gisaid_meta <- read.csv(paste0(file_path, "gisaid_hcov-19_2021_02_09_17.tsv"), sep="\t")
+
+gisaid_meta_1 <- gisaid_meta %>% mutate(county_1 = sapply(Location, function(x){
+  unlist(strsplit(x, "\\ / | "))[5] 
+})) %>% mutate(county = sapply(county_1, function(x){
+  ifelse(x == "Seattle", "King", 
+         ifelse(x == "Thurson", "Thurston", x))
+})) %>%
+  select(c(Accession.ID,Collection.date, county)) 
+
+gisaid_meta_c <- gisaid_meta_1[ !is.na(gisaid_meta_1$county) ,]
+
+gisaid_meta_c1 <- gisaid_meta_c %>% mutate(collection.date = ymd(Collection.date)) %>% select(-c(Collection.date))
+
+gisaid_meta_county_date <-  gisaid_meta_c1 %>% group_by(county, collection.date) %>% summarise(count=n()) 
+
+
+
+manual_color <-c("#80B918","#FEE440","#4361EE","#FFADAD","#FFD6A5","#FDFFB6","#CAFFBF","#9BF6FF","#A0C4FF","#BDB2FF","#FFC6FF","#233D4D","#CCCC00","#FCCA46","#A1C181",
+                 "#619B8A","#EE6352","#59CD90","#3FA7D6","#FAC05E","#F79D84","#50514F","#F25F5C","#FFE066","#247BA0","#70C1B3",
+                 "#FFD1E8","#C8A439","#465D6F","#A94303","#FF6347","#708841","#540D6E","#EE4266","#FFD23F","#3BCEAC","#0EAD69","#E3AB00ff","#D1DED3ff",
+                 "#AD8EB0ff","#58BADCff","#A71D2Eff","#86D8BBff","#0050ADff","#97CBF0ff","#67A280ff","#F20089","#41EAD4","#FBFF12","#54478C", "#F94144")
+
+plot_gisaid_timeseries <- ggplot(gisaid_meta_county_date, aes(x=collection.date, y= count, color= county)) +
+  geom_line()+
+  scale_color_manual(values=manual_color) +
+  theme_bw() 
+  
+  
+  
+
+  
+plot_gisaid_timeseries
+ggplotly(plot_gisaid_timeseries)
+
+```
