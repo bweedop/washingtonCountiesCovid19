@@ -1,3 +1,6 @@
+    library(ggplot2)
+    source("../src/environment.R")
+
     # List the counties in WA
     wash_counties <- c("Adams", "Asotin", "Benton", "Chelan", "Clallam", "Clark", "Columbia", "Cowlitz", "Douglas", "Ferry", "Franklin", "Garfield", "Grant", "Grays Harbor", "Island", "Jefferson", "King", "Kitsap", "Kittitas", "Klickitat", "Lewis", "Lincoln", "Mason", "Okanogan", "Pacific", "Pend Oreille", "Pierce", "San Juan", "Skagit", "Skamania", "Snohomish", "Spokane", "Stevens", "Thurston", "Wahkiakum", "Walla Walla", "Whatcom", "Whitman", "Yakima")
     # Append "County" at the end to be consistent with the data
@@ -11,6 +14,7 @@
     epiData <- epiData[-which(!epiData$County %in% wash_counties), ]
 
     ggplot(epiData, aes(x = WeekStartDate, y = ConfirmedCases, group=County, color=County)) + 
-      geom_line()
+      geom_line() +
+      scale_color_manual(values = colorPalette)
 
 ![](epiDataExploration_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
