@@ -13,12 +13,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 * Data downloaded from : https://www.census.gov/data/datasets/time-series/demo/popest/2010s-counties-total.html
 
+
+**change file path before use the script**
+- path need to be in the home dir of the github folder: washingtonCountiesCovid19
+- please clone the repo: git@github.com:bweedop/washingtonCountiesCovid19.git
+
 ```{r}
 library(tidyverse)
 library(readxl) # have to install after tidyverse loaded
 library(magrittr)
 
-file_path <- "/Users/rachel/Desktop/ECOL8350Capstone/"
+# if in Github, put the path lead to the github folder "washingtonCountiesCovid19"
+file_path <- "/Users/rachel/Desktop/ECOL8350Capstone/washingtonCountiesCovid19/"
+
 
 ```
 
@@ -28,7 +35,7 @@ https://www.doh.wa.gov/Emergencies/COVID19/DataDashboard#downloads
 
 ```{r}
 
-pop <- read_excel(paste0(file_path,"co-est2019-annres-53.xlsx"),trim_ws = TRUE)
+pop <- read_excel(paste0(file_path,"data/rawData/PopulationData/co-est2019-annres-53.xlsx"),trim_ws = TRUE)
 
 colnames(pop) <- c("county",pop[3,c(-1)])
 
@@ -42,17 +49,13 @@ pop_2019 <- pop %>% slice(-c(1:4)) %>%
   mutate(pop_percentage = count/sum(count)*100) %>% 
   select(-c("county", "count")) 
   
-  
-
-
-
 ```
 
 
 * Read Washington's Total cases by county (accumulated)
 ```{r}
 
-case <- read_excel(paste0(file_path, "WA_COVID19_Cases_Hospitalizations_Deaths.xlsx"))
+case <- read_excel(paste0(file_path, "data/rawData/COVID-19CaseData/WA_COVID19_Cases_Hospitalizations_Deaths.xlsx"))
 
 total_case_county <- case %>% group_by(County) %>% 
   select("TotalCases") %>% 
@@ -88,7 +91,7 @@ ggplot(case_vs_pop_melt, aes(x= WA.counties, y= percentage, fill=Variables))+
 ```{r}
 library(lubridate)
 library(plotly)
-gisaid_meta <- read.csv(paste0(file_path, "gisaid_hcov-19_2021_02_09_17.tsv"), sep="\t")
+gisaid_meta <- read.csv(paste0(file_path, "data/rawData/GeneticData/gisaid_hcov-19_2021_02_09_17.tsv"), sep="\t")
 
 gisaid_meta_1 <- gisaid_meta %>% mutate(county_1 = sapply(Location, function(x){
   unlist(strsplit(x, "\\ / | "))[5] 
