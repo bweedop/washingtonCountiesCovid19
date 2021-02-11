@@ -1,0 +1,94 @@
+---
+title: "COVID-19 <br> Metapopulations in Washington, USA"
+author: "Brandi Celia <br> Cody Dailey <br> Lambodhar Damodaran <br> K. Bodie Weedop <br> Rachel Xu"
+date: "2/11/2021"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Preface {-}
+
+Interdisciplinary Disease Ecology Across Scales (IDEAS) Capstone Course (ECOL8530) group project
+
+## Acknowledgements
+
+
+
+# Background
+
+## SARS-CoV-2 and COVID-19 Pandemic
+
+## Metapopulation Dynamics
+
+## Objectives
+
+
+
+
+# Methods
+
+## Data Sources
+
+
+## Data Management and Cleaning
+
+
+## Epidemic Curves and Time-series Analysis
+
+## Infectious Disease Modeling
+
+## Discrete-trait Phylogeography
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Results
+
+## Epidemic Curves and Time-series Analysis
+
+## Infectious Disease Modeling
+
+## Discrete-trait Phylogeography
+
+
+
+
+
+
+
+
+# Discussion
+
+
+
+
+
+
+# References
+
+
+
+
+
+
+
+
+# Appendices
