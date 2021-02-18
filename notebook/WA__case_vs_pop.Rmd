@@ -80,8 +80,37 @@ case_vs_pop_melt <- pivot_longer(case_vs_pop, c("pop_percentage","case_percentag
 ggplot(case_vs_pop_melt, aes(x= WA.counties, y= percentage, fill=Variables))+
   geom_bar(stat="identity", position="dodge") +
   theme_bw()+
-  theme(axis.text.x = element_text(angle=90,  vjust = 0.3))
+  theme(axis.text = element_text(angle=90,size=18), axis.title = element_text(size=18), legend.text = element_text(size=18),legend.title = element_text(size=18),axis.text.x = element_text(vjust=0.5))
 
+```
+### Map cases to WA county map
+```{r}
+
+library(maps)
+library(maptools)
+
+WA_counties <- map_data("county")%>% subset(region == "washington")
+unique(WA_counties$subregion)
+
+case <- read_excel(paste0(file_path, "data/rawData/COVID-19CaseData/WA_COVID19_Cases_Hospitalizations_Deaths.xlsx")) 
+
+case_county <- case %>% group_by(County) %>% 
+  select("TotalCases") %>% 
+  summarise(count = sum(TotalCases)) %>% 
+  mutate(subregion = sapply(County, function(x){
+  tolower(paste(head(unlist(strsplit(x, " ", fixed = TRUE)),-1),collapse = " "))
+})) %>% 
+  select(-c("County"))
+
+case_per_county<-left_join(WA_counties, case_county, by="subregion")
+
+
+ggplot(data =case_per_county,
+            mapping = aes(x = long, y = lat,group=group,fill=count))+ 
+  geom_polygon() +
+  theme_bw()+
+   scale_fill_gradient(low = "#FFFACD", high = "#8B0000", na.value = NA)+
+  theme(axis.text = element_text(size=18), axis.title = element_text(size = 18),legend.text = element_text(size=18), legend.title = element_text(size=18)) 
 ```
 
 ### GISAID sequence metadata 2/9/2021
