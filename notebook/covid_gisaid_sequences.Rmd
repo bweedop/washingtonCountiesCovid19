@@ -1,0 +1,41 @@
+---
+title: "covid_gisaid_sequences"
+author: "Rachel Xu"
+date: "2/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r}
+path <- "/Users/rachel/Desktop/ECOL8350Capstone/washingtonCountiesCovid19/"
+data_path <- paste0(path,"data/rawData/GeneticData/")
+
+library(dplyr)
+
+```
+
+```{r}
+gisaid_meta <- read.csv(paste0(data_path, "gisaid_hcov-19_2021_02_09_17.tsv"), sep="\t")
+
+# grep county name and fix mislabelling 
+gisaid_meta_1 <- gisaid_meta %>% mutate(county_1 = sapply(Location, function(x){
+  unlist(strsplit(x, "\\ / | "))[5] 
+})) %>% mutate(county = sapply(county_1, function(x){
+  ifelse(x == "Seattle", "King", 
+         ifelse(x == "Thurson", "Thurston", x))
+})) %>%
+  select(c(Virus.name,Accession.ID,Collection.date, county, Lineage, Clade)) 
+
+gisaid_meta_c <- gisaid_meta_1[ !is.na(gisaid_meta_1$county) ,]
+
+row.names(gisaid_meta_c) <- NULL # reset index
+
+# randomly generate 500 sequences
+random_sample <- data.frame(sample(gisaid_meta_c$Accession.ID, 500))
+random_sample
+# write.csv(random_sample,paste0(data_path, "random_generated_seq_id.csv"), row.names = FALSE, col.names = FALSE)
+```
