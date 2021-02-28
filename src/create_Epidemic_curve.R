@@ -105,13 +105,13 @@ at.points <- seq(0.5, 54.5, by=1)[which(wa.covid$week%in%date.labels)]
 par(mar=c(5.1,4.1,4.1,2.1))
 
 
-png(filename = "./output/covid_incidence/epidemic_curve.png", height = 5, width = 5, units = "in", res = 300, pointsize = 12, family = "sans")
+# png(filename = "./output/covid_incidence/epidemic_curve.png", height = 5, width = 5, units = "in", res = 300, pointsize = 12, family = "sans")
 barplot(n.cases~week, data=wa.covid, las=2, xlab = '', ylab = '', xaxt = 'n', yaxt = 'n', width = 1, space = 0, xaxs = 'i', yaxs = 'i', axes=F)
 axis(1, at=at.points, tick=T, labels = F)
 text(x = at.points-2, y = par("usr")[3]-5, labels = paste(format(date.labels, "%d %b"),' '), srt = 45, pos = 1, xpd = TRUE,cex=0.7, offset = 1.15)
 axis(2, labels = T, tick = T, cex=0.7, cex.axis = 0.7)
 title(main = "Total COVID-19 Cases in Washington, USA \n January 2020 - January 2021", xlab = "Week", ylab = "Cases", cex.lab = 0.9)
-dev.off()
+# dev.off()
 
 
 # plot(n.cases~week, data=wa.covid, type = "h", axes=F, xlab='', ylab='')
@@ -137,27 +137,27 @@ my.palette <- viridis(length(my.breaks)-1)
 
 
 
-saveGIF(
-
-
-  for(i in 1:length(weeks)){
-  par(mar=c(5.1,4.1,4.1,2.1))
-  temp <- left_join(counties, covid.weekly[which(covid.weekly$week==weeks[i]),], by = "county")
-  
-  plot(temp['total.cases'], 
-       pal = my.palette, 
-       breaks = my.breaks, 
-       main = paste0("\n Weekly Total COVID-19 Cases \n ", format(weeks[i], "%d %b")), 
-       family = "sans", ps = 12)
-  }, 
-  
-  movie.name = "C:/Users/Cody Dailey/Documents/Github Projects/washingtonCountiesCovid19/output/covid_incidence/cases_by_week_gif.gif", 
-  ani.interval = 0.5, 
-  ani.width = 1500, 
-  ani.height = 1500, 
-  ani.res = 300
-
-)
+# saveGIF(
+# 
+# 
+#   for(i in 1:length(weeks)){
+#   par(mar=c(5.1,4.1,4.1,2.1))
+#   temp <- left_join(counties, covid.weekly[which(covid.weekly$week==weeks[i]),], by = "county")
+#   
+#   plot(temp['total.cases'], 
+#        pal = my.palette, 
+#        breaks = my.breaks, 
+#        main = paste0("\n Weekly Total COVID-19 Cases \n ", format(weeks[i], "%d %b")), 
+#        family = "sans", ps = 12)
+#   }, 
+#   
+#   movie.name = "C:/Users/Cody Dailey/Documents/Github Projects/washingtonCountiesCovid19/output/covid_incidence/cases_by_week_gif.gif", 
+#   ani.interval = 0.5, 
+#   ani.width = 1500, 
+#   ani.height = 1500, 
+#   ani.res = 300
+# 
+# )
 
 
 
@@ -173,32 +173,50 @@ names(covid.weekly.wide.by.county) <- gsub(" County", "", names(covid.weekly.wid
 
 cor.mat.by.county <- cor(covid.weekly.wide.by.county[,-1])
 
-png(filename = "./output/covid_incidence/epidemic_curve_correlations.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+# png(filename = "./output/covid_incidence/epidemic_curve_correlations.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
 heatmap(cor.mat.by.county, Rowv=NA, Colv=NA, col = viridis(15))
-dev.off()
+# dev.off()
 
 
-png(filename = "./output/covid_incidence/epidemic_curve_correlations_clustered.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+# png(filename = "./output/covid_incidence/epidemic_curve_correlations_clustered.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
 heatmap(cor.mat.by.county, Rowv=NA, col = viridis(15))
-dev.off()
+# dev.off()
+
+
+rates.of.change <- covid.weekly.wide.by.county
+rates.of.change[,2:40] <- rbind(rates.of.change[-1,2:40] / rates.of.change[-nrow(rates.of.change),2:40], rep(NA, length(2:40)))
+
+rates.of.change %<>% mutate_all(function(x){ifelse(is.infinite(x) | is.nan(x), NA, x)})
 
 
 
 
 
-# heat map for correlations among weeks
 
-covid.weekly.wide <- covid.weekly[order(covid.weekly$county, covid.weekly$week),] %>% 
-  group_by(county) %>% 
-  mutate(week.number = seq_along(county)) %>% 
-  select(-week) %>%
-  pivot_wider(names_prefix = "week", names_from = "week.number", values_from = "total.cases") 
 
-cor.mat.by.week <- cor(covid.weekly.wide[,-1])
 
-png(filename = "./output/covid_incidence/weekly_cases_correlations.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
-heatmap(cor.mat.by.week, Rowv=NA, Colv=NA, col = viridis(50))
-dev.off()
+
+
+
+
+
+
+
+
+
+# # heat map for correlations among weeks
+# 
+# covid.weekly.wide <- covid.weekly[order(covid.weekly$county, covid.weekly$week),] %>% 
+#   group_by(county) %>% 
+#   mutate(week.number = seq_along(county)) %>% 
+#   select(-week) %>%
+#   pivot_wider(names_prefix = "week", names_from = "week.number", values_from = "total.cases") 
+# 
+# cor.mat.by.week <- cor(covid.weekly.wide[,-1])
+# 
+# # png(filename = "./output/covid_incidence/weekly_cases_correlations.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+# heatmap(cor.mat.by.week, Rowv=NA, Colv=NA, col = viridis(50))
+# # dev.off()
 
 
 
