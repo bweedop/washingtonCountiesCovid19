@@ -1,5 +1,5 @@
 
-my.packages <- c("dplyr", "magrittr")
+my.packages <- c("dplyr", "magrittr", "plotrix")
 lapply(my.packages, library, character.only=T)
 
 
