@@ -1,0 +1,270 @@
+                                 _____________________________
+
+                                         SaTScan v9.6
+                                 _____________________________
+
+
+Program run on: Wed Mar 03 19:53:54 2021
+
+Purely Spatial analysis
+scanning for clusters with high or low rates
+using the Discrete Poisson model.
+_______________________________________________________________________________________________
+
+SUMMARY OF DATA
+
+Study period.......................: 2020/1/19 to 2021/1/31
+Number of locations................: 39
+Population, averaged over time.....: 7614893
+Total number of cases..............: 3394
+Annual cases / 100000..............: 43.0
+_______________________________________________________________________________________________
+
+CLUSTERS DETECTED
+
+1.Location IDs included.: GrantCounty, DouglasCounty, AdamsCounty, FranklinCounty,
+                          LincolnCounty, KittitasCounty, BentonCounty, ChelanCounty,
+                          YakimaCounty, WallaWallaCounty, WhitmanCounty, OkanoganCounty
+  Overlap with clusters.: 2, 3, 9
+  Coordinates / radius..: (1.90055e+006,684059) / 495490.31
+  Gini Cluster..........: No
+  Population............: 1000811
+  Number of cases.......: 1177
+  Expected cases........: 446.07
+  Annual cases / 100000.: 113.3
+  Observed / expected...: 2.64
+  Relative risk.........: 3.51
+  Log likelihood ratio..: 510.257419
+  P-value...............: < 0.00000000000000001
+
+2.Location IDs included.: AdamsCounty, FranklinCounty, LincolnCounty, GrantCounty,
+                          WhitmanCounty, WallaWallaCounty
+  Overlap with clusters.: 1
+  Coordinates / radius..: (2.12431e+006,607716) / 275709.89
+  Gini Cluster..........: Yes
+  Population............: 334741
+  Number of cases.......: 598
+  Expected cases........: 149.20
+  Annual cases / 100000.: 172.2
+  Observed / expected...: 4.01
+  Relative risk.........: 4.65
+  Log likelihood ratio..: 413.994638
+  P-value...............: < 0.00000000000000001
+
+3.Location IDs included.: ChelanCounty, DouglasCounty
+  Overlap with clusters.: 1
+  Coordinates / radius..: (1.61141e+006,924343) / 232370.80
+  Gini Cluster..........: Yes
+  Population............: 120629
+  Number of cases.......: 205
+  Expected cases........: 53.77
+  Annual cases / 100000.: 163.8
+  Observed / expected...: 3.81
+  Relative risk.........: 3.99
+  Log likelihood ratio..: 126.610943
+  P-value...............: < 0.00000000000000001
+
+4.Location IDs included.: SkagitCounty, WhatcomCounty, SnohomishCounty, IslandCounty,
+                          SanJuanCounty, KingCounty
+  Overlap with clusters.: 5, 7
+  Coordinates / radius..: (1.32441e+006,1.15149e+006) / 362166.92
+  Gini Cluster..........: No
+  Population............: 3536040
+  Number of cases.......: 1126
+  Expected cases........: 1576.03
+  Annual cases / 100000.: 30.7
+  Observed / expected...: 0.71
+  Relative risk.........: 0.57
+  Log likelihood ratio..: 123.029433
+  P-value...............: < 0.00000000000000001
+
+5.Location IDs included.: SanJuanCounty, IslandCounty, WhatcomCounty
+  Overlap with clusters.: 4
+  Coordinates / radius..: (1.04005e+006,1.18764e+006) / 284613.08
+  Gini Cluster..........: Yes
+  Population............: 331970
+  Number of cases.......: 37
+  Expected cases........: 147.96
+  Annual cases / 100000.: 10.7
+  Observed / expected...: 0.25
+  Relative risk.........: 0.24
+  Log likelihood ratio..: 61.553027
+  P-value...............: < 0.00000000000000001
+
+6.Location IDs included.: ClarkCounty, CowlitzCounty, SkamaniaCounty, LewisCounty,
+                          WahkiakumCounty, ThurstonCounty, PacificCounty, KlickitatCounty,
+                          PierceCounty
+  Overlap with clusters.: 8, 9, 11
+  Coordinates / radius..: (1.13459e+006,168921) / 467251.46
+  Gini Cluster..........: No
+  Population............: 1936524
+  Number of cases.......: 622
+  Expected cases........: 863.12
+  Annual cases / 100000.: 31.0
+  Observed / expected...: 0.72
+  Relative risk.........: 0.66
+  Log likelihood ratio..: 48.481701
+  P-value...............: < 0.00000000000000001
+
+7.Location IDs included.: SnohomishCounty
+  Overlap with clusters.: 4
+  Coordinates / radius..: (1.34135e+006,991759) / 0
+  Gini Cluster..........: Yes
+  Population............: 822083
+  Number of cases.......: 225
+  Expected cases........: 366.41
+  Annual cases / 100000.: 26.4
+  Observed / expected...: 0.61
+  Relative risk.........: 0.59
+  Log likelihood ratio..: 34.939041
+  P-value...............: 0.000000000000045
+
+8.Location IDs included.: WahkiakumCounty, PacificCounty, CowlitzCounty, ThurstonCounty
+  Overlap with clusters.: 6
+  Coordinates / radius..: (899146,363108) / 277484.75
+  Gini Cluster..........: Yes
+  Population............: 428088
+  Number of cases.......: 91
+  Expected cases........: 190.80
+  Annual cases / 100000.: 20.5
+  Observed / expected...: 0.48
+  Relative risk.........: 0.46
+  Log likelihood ratio..: 33.966135
+  P-value...............: 0.00000000000012
+
+9.Location IDs included.: KlickitatCounty, YakimaCounty, SkamaniaCounty, BentonCounty
+  Overlap with clusters.: 1, 6
+  Coordinates / radius..: (1.56668e+006,197511) / 350777.90
+  Gini Cluster..........: Yes
+  Population............: 489771
+  Number of cases.......: 320
+  Expected cases........: 218.29
+  Annual cases / 100000.: 63.0
+  Observed / expected...: 1.47
+  Relative risk.........: 1.51
+  Log likelihood ratio..: 22.333507
+  P-value...............: 0.0000000089
+
+10.Location IDs included.: GraysHarborCounty
+   Overlap with clusters.: No Overlap
+   Coordinates / radius..: (812614,677769) / 0
+   Gini Cluster..........: Yes
+   Population............: 75061
+   Number of cases.......: 71
+   Expected cases........: 33.46
+   Annual cases / 100000.: 91.2
+   Observed / expected...: 2.12
+   Relative risk.........: 2.15
+   Log likelihood ratio..: 16.091382
+   P-value...............: 0.0000037
+
+11.Location IDs included.: PierceCounty
+   Overlap with clusters.: 6
+   Coordinates / radius..: (1.23248e+006,625805) / 0
+   Gini Cluster..........: Yes
+   Population............: 904980
+   Number of cases.......: 330
+   Expected cases........: 403.35
+   Annual cases / 100000.: 35.1
+   Observed / expected...: 0.82
+   Relative risk.........: 0.80
+   Log likelihood ratio..: 8.008226
+   P-value...............: 0.013
+
+12.Location IDs included.: JeffersonCounty, ClallamCounty, MasonCounty, KitsapCounty
+   Overlap with clusters.: No Overlap
+   Coordinates / radius..: (884182,906149) / 233673.40
+   Gini Cluster..........: No
+   Population............: 447793
+   Number of cases.......: 161
+   Expected cases........: 199.58
+   Annual cases / 100000.: 34.6
+   Observed / expected...: 0.81
+   Relative risk.........: 0.80
+   Log likelihood ratio..: 4.228286
+   P-value...............: 0.284
+_______________________________________________________________________________________________
+
+PARAMETER SETTINGS
+
+Input
+-----
+  Case File        : C:\Users\Cody Dailey\AppData\Local\Temp\Rtmpg95ZX9\WA31.cas
+  Population File  : C:\Users\Cody Dailey\AppData\Local\Temp\Rtmpg95ZX9\WA.pop
+  Time Precision   : Day
+  Start Time       : 2020/1/19
+  End Time         : 2021/1/31
+  Coordinates File : C:\Users\Cody Dailey\AppData\Local\Temp\Rtmpg95ZX9\WA.geo
+  Coordinates      : Cartesian
+
+Analysis
+--------
+  Type of Analysis    : Purely Spatial
+  Probability Model   : Discrete Poisson
+  Scan for Areas with : High or Low Rates
+
+Output
+------
+  Main Results File : C:\Users\Cody Dailey\Documents\Github Projects\washingtonCountiesCovid19\output\covid_incidence\satscan\by_week\WA31.txt
+
+Data Checking
+-------------
+  Temporal Data Check     : Check to ensure that all cases and controls are within the specified temporal study period.
+  Geographical Data Check : Check to ensure that all observations (cases, controls and populations) are within the specified geographical area.
+
+Spatial Neighbors
+-----------------
+  Use Non-Euclidian Neighbors file : No
+  Use Meta Locations File          : No
+  Multiple Coordinates Type        : Allow only one set of coordinates per location ID.
+
+Spatial Window
+--------------
+  Maximum Spatial Cluster Size : 50 percent of population at risk
+  Window Shape                 : Circular
+  Isotonic Scan                : No
+
+Cluster Restrictions
+--------------------
+  Minimum Cases in Cluster for High Rates : 2
+  Restrict High Rate Clusters             : No
+  Restrict Low Rate Clusters              : No
+
+Space And Time Adjustments
+--------------------------
+  Adjust for known relative risks : No
+
+Inference
+---------
+  P-Value Reporting                  : Default Combination
+  Number of Replications             : 999
+  Adjusting for More Likely Clusters : No
+
+Border Analysis
+---------------
+  Report Oliveira's F : No
+
+Spatial Output
+--------------
+  Report Hierarchical Clusters              : Yes
+  Criteria for Reporting Secondary Clusters : No Geographical Overlap
+  Report Gini Optimized Cluster Collection  : Yes
+  Gini Index Based Collection Reporting     : Optimal Only
+  Report Gini Index Cluster Coefficents     : No
+  Restrict Reporting to Smaller Clusters    : No
+
+Other Output
+------------
+  Report Critical Values  : No
+  Report Monte Carlo Rank : No
+
+Run Options
+-----------
+  Processor Usage   : All Available Processors
+  Suppress Warnings : No
+  Logging Analysis  : No
+_______________________________________________________________________________________________
+
+Program completed  : Wed Mar 03 19:53:54 2021
+Total Running Time : 0 seconds
+Processor Usage    : 4 processors
