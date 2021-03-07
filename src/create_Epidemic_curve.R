@@ -6,7 +6,7 @@
 
 my.packages <- c("readxl", "dplyr", "magrittr", "usmap", "ggplot2", "sf", "tidyr", "viridis", "animation", "spdep", "purrr", "rsatscan")
 
-lapply(my.packages, library, character.only = TRUE)
+lapply(my.packages, function(x){if(require(x, character.only = TRUE)){library(x, character.only = TRUE)}else{install.packages(x);library(x, character.only = TRUE)}})
 
 
 
@@ -296,6 +296,23 @@ which(roc.cor.mat95!=0 & lower.tri(roc.cor.mat95), arr.ind = T)
 
 
 
+# heat map for correlations among weeks
+
+covid.weekly.wide <- covid.weekly[order(covid.weekly$county, covid.weekly$week),] %>%
+  group_by(county) %>%
+  mutate(week.number = seq_along(county)) %>%
+  select(-week) %>%
+  pivot_wider(names_prefix = "week", names_from = "week.number", values_from = "total.cases")
+
+cor.mat.by.week <- cor(covid.weekly.wide[,-1])
+
+# png(filename = "./output/covid_incidence/weekly_cases_correlations.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+heatmap(cor.mat.by.week, Rowv=NA, Colv=NA, col = viridis(50))
+# dev.off()
+
+
+
+
 
 
 # spatial autocorrelation
@@ -314,14 +331,14 @@ morans.i.results <- data.frame(week = covid.weekly.wide.by.county$week, morans.i
 
 # satscan
 
-write.table(covid.weekly%>%mutate(county=gsub(" ", "", county)), file = "./data/processedData/covid_weekly.txt", quote = F, row.names = F)
+# write.table(covid.weekly%>%mutate(county=gsub(" ", "", county)), file = "./data/processedData/covid_weekly.txt", quote = F, row.names = F)
 
 
 wa.coords <- cbind(county = gsub(" ", "", counties$county), st_coordinates(st_centroid(st_geometry(counties))))[,c(1,3,2)]
 
-write.table(wa.coords, file = "./data/processedData/wa_coords.txt", quote = F, row.names = F)
-
-write.table(population%>%mutate(county=gsub(" ", "", county)), file = "./data/processedData/wa_pop.txt", quote = F, row.names = F)
+# write.table(wa.coords, file = "./data/processedData/wa_coords.txt", quote = F, row.names = F)
+# 
+# write.table(population%>%mutate(county=gsub(" ", "", county)), file = "./data/processedData/wa_pop.txt", quote = F, row.names = F)
 
 
 
@@ -357,43 +374,35 @@ for(i in 1:length(weeks)){
   covid.weekly.list[[i]] <- covid.weekly[which(covid.weekly$week==weeks[i]),] %>% mutate(county=gsub(" ", "", county))
 }
 
-temporary.directory <- tempdir()
-
-
-write.geo(wa.coords, temporary.directory,"WA")
-write.pop(population%>%mutate(county=gsub(" ", "", county)), temporary.directory,"WA")
-
-
-for(i in 1:length(weeks)){
-  write.cas(covid.weekly.list[[i]], temporary.directory, paste0("WA", i))
-}
-
-satscan.wa <- list()
-
-
-for(i in 1:length(weeks)){
-
-invisible(ss.options(reset=TRUE))
-
-ss.options(list(CaseFile=paste0("WA",i,".cas"),StartDate=format(weeks[i], "%Y/%m/%d"),EndDate=format(weeks[i], "%Y/%m/%d"), PrecisionCaseTimes=3, 
-                PopulationFile="WA.pop",
-                CoordinatesFile="WA.geo", CoordinatesType=0, AnalysisType=1, ModelType=0, ScanAreas=3, TimeAggregationUnits=3, TimeAggregationLength=1))
-ss.options(c("NonCompactnessPenalty=0", "ReportGiniClusters=n", "LogRunToHistoryFile=n"))
-
-write.ss.prm(temporary.directory,"WA_param")
-
-
-satscan.wa[[i]] <- satscan(temporary.directory,"WA_param")
-
-}
-
-# sp::plot(NYCfever$shapeclust)
-
-
-hist(unlist(NYCfever$llr), main="Monte Carlo")
-
-# Let's draw a line for the clusters in the observed data
-abline(v=NYCfever$col[,c("TEST_STAT")], col = "red")
+# temporary.directory <- tempdir()
+# 
+# 
+# write.geo(wa.coords, temporary.directory,"WA")
+# write.pop(population%>%mutate(county=gsub(" ", "", county)), temporary.directory,"WA")
+# 
+# 
+# for(i in 1:length(weeks)){
+#   write.cas(covid.weekly.list[[i]], temporary.directory, paste0("WA", i))
+# }
+# 
+# satscan.wa <- list()
+# 
+# 
+# for(i in 1:length(weeks)){
+# 
+# invisible(ss.options(reset=TRUE))
+# 
+# ss.options(list(CaseFile=paste0("WA",i,".cas"),StartDate=format(weeks[i], "%Y/%m/%d"),EndDate=format(weeks[i], "%Y/%m/%d"), PrecisionCaseTimes=3, 
+#                 PopulationFile="WA.pop",
+#                 CoordinatesFile="WA.geo", CoordinatesType=0, AnalysisType=1, ModelType=0, ScanAreas=3, TimeAggregationUnits=3, TimeAggregationLength=1))
+# ss.options(c("NonCompactnessPenalty=0", "ReportGiniClusters=n", "LogRunToHistoryFile=n"))
+# 
+# write.ss.prm(temporary.directory,"WA_param")
+# 
+# 
+# satscan.wa[[i]] <- satscan(temporary.directory,"WA_param")
+# 
+# }
 
 
 
@@ -402,24 +411,6 @@ abline(v=NYCfever$col[,c("TEST_STAT")], col = "red")
 
 
 
-
-
-
-
-
-# heat map for correlations among weeks
-
-covid.weekly.wide <- covid.weekly[order(covid.weekly$county, covid.weekly$week),] %>%
-  group_by(county) %>%
-  mutate(week.number = seq_along(county)) %>%
-  select(-week) %>%
-  pivot_wider(names_prefix = "week", names_from = "week.number", values_from = "total.cases")
-
-cor.mat.by.week <- cor(covid.weekly.wide[,-1])
-
-# png(filename = "./output/covid_incidence/weekly_cases_correlations.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
-heatmap(cor.mat.by.week, Rowv=NA, Colv=NA, col = viridis(50))
-# dev.off()
 
 
 
