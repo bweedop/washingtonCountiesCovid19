@@ -130,7 +130,10 @@ weeks <- unique(covid.weekly$week)
 weeks <- weeks[order(weeks)]
 
 
-my.breaks <- c(0, 2, 4, 6, 8, 10, 15, 20, 30, 40, 50, 75, 100, 200, 500, 1000, 1500, 2000, 3000, 5000, 6000)
+# my.breaks <- c(0, 2, 4, 6, 8, 10, 15, 20, 30, 40, 50, 75, 100, 200, 500, 1000, 1500, 2000, 3000, 5000, 6000)
+# my.breaks <- c(0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192)
+# my.breaks <- c(0,1,2,4,6,8,10,20,30,40,50,100,200,300,400,500,1000,1500,2000,4000,6000)
+my.breaks <- unique(ceiling(quantile(covid.weekly$total.cases, probs = seq(0,1, by=0.025))))
 my.palette <- viridis(length(my.breaks)-1)
 
 
@@ -163,10 +166,181 @@ my.palette <- viridis(length(my.breaks)-1)
 
 
 
+# 
+#   for(i in 1:length(weeks)){
+#   par(mar=c(5.1,4.1,4.1,2.1))
+#   temp <- left_join(counties, covid.weekly[which(covid.weekly$week==weeks[i]),], by = "county")
+# 
+#   plot(temp['total.cases'],
+#        pal = my.palette,
+#        breaks = my.breaks,
+#        main = paste0("\n Weekly Total COVID-19 Cases \n ", format(weeks[i], "%d %b")),
+#        family = "sans", ps = 12)
+#   }
+
+setwd("./output/covid_incidence/gif")
+
+png(filename = "epidemic_curve_wa_%03d.png", height = 5.63, width = 10, units = "in", res = 300, pointsize = 12, family = "sans")
+for(i in 1:length(weeks)){
+layout(matrix(data=c(1,3,2,3), ncol = 2, byrow = T), widths = c(lcm(5*2.54), lcm(5*2.54)), heights = c(lcm(4.5*2.54),lcm(1.13*2.54)))
+# layout.show(3)
+
+# layout(matrix(1:2, nrow = 2), heights = c(1, lcm(3)))
+# layout.show(2)
+
+temp <- left_join(counties, covid.weekly[which(covid.weekly$week==weeks[i]),], by = "county")
+
+  # plot(temp['total.cases'],
+  #      pal = my.palette,
+  #      breaks = my.breaks,
+  #      main = paste0("\n Weekly Total COVID-19 Cases \n ", format(weeks[10], "%d %b")),
+  #      family = "sans", ps = 12)
+par(mar = c(0,0,0,0), oma = c(0,0,0,0))
+
+plot(temp$geometry, axes = F)
+plot(temp['total.cases'], pal = my.palette, breaks = my.breaks, add = T)
+title(main = format(weeks[i], "%d %b %Y"), line = -1, cex.main = 1, font.main = 1)
+
+# .image_scale_factor(c("MP2", "MP1"), col = viridis(2)[2:1], key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+.image_scale_factor(rep("", length(my.palette)), col = my.palette, key.length = 1, key.width = 1, key.pos = c(1), add.axis = F, axes = F, xpd = T)
+# axis(1, at = seq(1.5, length(my.palette)-0.5, by=1), labels = my.breaks[c(-1, -length(my.breaks))], cex.axis = 6/12, las = 0)
+axis(1, at = seq(1.5, length(my.palette)-0.5, by=2), labels = my.breaks[c(-1, -length(my.breaks))][seq(1,length(my.breaks)-2,by=2)], cex.axis = 10/12, las = 0)
+axis(3, at = seq(2.5, length(my.palette)-0.5, by=2), labels = my.breaks[c(-1, -length(my.breaks))][seq(2,length(my.breaks)-2,by=2)], cex.axis = 10/12, las = 0)
+
+# axis(3, at = seq(1.5, length(my.palette)-0.5, by=1), labels = rep("", length(my.palette)-1), cex.axis = 10/12, las = 2)
+# text(x=seq(1.5, length(my.palette)-0.5, by=1), y=-2, labels = my.breaks[c(-1, -length(my.breaks))], xpd=TRUE, cex=10/12, srt = 45)
+
+par(mar = c(4.1, 4.1, 1.1, 0.1))
+barplot(n.cases~week, data=wa.covid, las=2, xlab = '', ylab = '', xaxt = 'n', yaxt = 'n', width = 1, space = 0, xaxs = 'i', yaxs = 'i', axes=F)
+axis(1, at=at.points, tick=T, labels = F)
+text(x = at.points-2, y = par("usr")[3]-5, labels = paste(format(date.labels, "%d %b"),' '), srt = 45, pos = 1, xpd = TRUE,cex=0.7, offset = 1.15)
+axis(2, labels = T, tick = T, cex=0.7, cex.axis = 0.7)
+title(xlab = "Week", ylab = "Cases", cex.lab = 0.9)
+# title(main = "Total COVID-19 Cases in Washington, USA \n January 2020 - January 2021", xlab = "Week", ylab = "Cases", cex.lab = 0.9)
+
+barplot(n.cases~week, data=wa.covid%>%mutate(n.cases = ifelse(week==weeks[i], n.cases, 0)), las=2, xlab = '', ylab = '', xaxt = 'n', yaxt = 'n', width = 1, space = 0, xaxs = 'i', yaxs = 'i', axes=F, col = "#FDE725FF", border = "#440154FF", add = T)
+
+
+}
+dev.off()
+
+shell("dir")
+shell('"C:/Program Files/ImageMagick-7.0.11-Q16-HDRI/magick.exe" convert -delay 80 *.png epidemic_curve_map.gif')
+
+
+
+setwd("../../..")
+
+getwd()
+
+
+
+
+
+
+
+
+
+
+
+
+covid.weekly.p100k <- left_join(covid.weekly, population, by = "county") %>% mutate(total.cases = total.cases / pop2019 * 100000)
+
+my.breaks <- unique(ceiling(quantile(covid.weekly.p100k$total.cases, probs = seq(0,1, by=0.025))))
+my.palette <- viridis(length(my.breaks)-1)
+
+wa.covid.p100k <- covid.weekly %>% 
+  group_by(week) %>% 
+  summarise(n.cases = sum(total.cases)) %>% mutate(cases.p100k = n.cases / sum(population$pop2019)*100000)
+
+setwd("./output/covid_incidence/gif2")
+
+
+png(filename = "epidemic_curve_wa_%03d.png", height = 5.63, width = 10, units = "in", res = 300, pointsize = 12, family = "sans")
+for(i in 1:length(weeks)){
+  layout(matrix(data=c(1,3,2,3), ncol = 2, byrow = T), widths = c(lcm(5*2.54), lcm(5*2.54)), heights = c(lcm(4.5*2.54),lcm(1.13*2.54)))
+  # layout.show(3)
+  
+  # layout(matrix(1:2, nrow = 2), heights = c(1, lcm(3)))
+  # layout.show(2)
+  
+  temp <- left_join(counties, covid.weekly.p100k[which(covid.weekly.p100k$week==weeks[i]),], by = "county")
+  
+  # plot(temp['total.cases'],
+  #      pal = my.palette,
+  #      breaks = my.breaks,
+  #      main = paste0("\n Weekly Total COVID-19 Cases \n ", format(weeks[10], "%d %b")),
+  #      family = "sans", ps = 12)
+  par(mar = c(0,0,0,0), oma = c(0,0,0,0))
+  
+  plot(temp$geometry, axes = F)
+  plot(temp['total.cases'], pal = my.palette, breaks = my.breaks, add = T)
+  title(main = format(weeks[i], "%d %b %Y"), line = -1, cex.main = 1, font.main = 1)
+  
+  # .image_scale_factor(c("MP2", "MP1"), col = viridis(2)[2:1], key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+  .image_scale_factor(rep("", length(my.palette)), col = my.palette, key.length = 1, key.width = 1, key.pos = c(1), add.axis = F, axes = F, xpd = T)
+  # axis(1, at = seq(1.5, length(my.palette)-0.5, by=1), labels = my.breaks[c(-1, -length(my.breaks))], cex.axis = 6/12, las = 0)
+  axis(1, at = seq(1.5, length(my.palette)-0.5, by=2), labels = my.breaks[c(-1, -length(my.breaks))][seq(1,length(my.breaks)-2,by=2)], cex.axis = 10/12, las = 0)
+  axis(3, at = seq(2.5, length(my.palette)-0.5, by=2), labels = my.breaks[c(-1, -length(my.breaks))][seq(2,length(my.breaks)-2,by=2)], cex.axis = 10/12, las = 0)
+  
+  # axis(3, at = seq(1.5, length(my.palette)-0.5, by=1), labels = rep("", length(my.palette)-1), cex.axis = 10/12, las = 2)
+  # text(x=seq(1.5, length(my.palette)-0.5, by=1), y=-2, labels = my.breaks[c(-1, -length(my.breaks))], xpd=TRUE, cex=10/12, srt = 45)
+  
+  par(mar = c(4.1, 4.1, 1.1, 0.1))
+  barplot(cases.p100k~week, data=wa.covid.p100k, las=2, xlab = '', ylab = '', xaxt = 'n', yaxt = 'n', width = 1, space = 0, xaxs = 'i', yaxs = 'i', axes=F)
+  axis(1, at=at.points, tick=T, labels = F)
+  text(x = at.points-2, y = par("usr")[3]-5, labels = paste(format(date.labels, "%d %b"),' '), srt = 45, pos = 1, xpd = TRUE,cex=0.7, offset = 1.15)
+  axis(2, labels = T, tick = T, cex=0.7, cex.axis = 0.7)
+  title(xlab = "Week", ylab = "Cases per 100k", cex.lab = 0.9)
+  # title(main = "Total COVID-19 Cases in Washington, USA \n January 2020 - January 2021", xlab = "Week", ylab = "Cases", cex.lab = 0.9)
+  
+  barplot(cases.p100k~week, data=wa.covid.p100k%>%mutate(cases.p100k = ifelse(week==weeks[i], cases.p100k, 0)), las=2, xlab = '', ylab = '', xaxt = 'n', yaxt = 'n', width = 1, space = 0, xaxs = 'i', yaxs = 'i', axes=F, col = "#FDE725FF", border = "#440154FF", add = T)
+  
+  
+}
+dev.off()
+
+shell("dir")
+shell('"C:/Program Files/ImageMagick-7.0.11-Q16-HDRI/magick.exe" convert -delay 80 *.png epidemic_curve_map2.gif')
+
+
+
+setwd("../../..")
+
+getwd()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # heat map for correlations among counties
 
 covid.weekly.wide.by.county <- covid.weekly[order(covid.weekly$county, covid.weekly$week),] %>% 
   pivot_wider(names_from = "county", values_from = "total.cases") 
+
+
+# covid.weekly.wide.by.county <- covid.weekly.p100k[order(covid.weekly.p100k$county, covid.weekly.p100k$week),c("week", "county", "total.cases")] %>% 
+#   pivot_wider(names_from = "county", values_from = "total.cases") 
+
 
 
 names(covid.weekly.wide.by.county) <- gsub(" County", "", names(covid.weekly.wide.by.county))
@@ -184,7 +358,7 @@ heatmap(cor.mat.by.county, Rowv=NA, col = viridis(15))
 
 
 rates.of.change <- covid.weekly.wide.by.county
-rates.of.change[,2:40] <- rbind(rates.of.change[-1,2:40] / rates.of.change[-nrow(rates.of.change),2:40], rep(NA, length(2:40)))
+rates.of.change[,2:40] <- rbind(rep(NA, length(2:40)), rates.of.change[-1,2:40] / rates.of.change[-nrow(rates.of.change),2:40])
 
 rates.of.change %<>% mutate_at(2:40, function(x){ifelse(is.infinite(x) | is.nan(x), NA, x)})
 
@@ -247,7 +421,9 @@ nb.weighted0 <- mat2listw(nb.matrix.weighted0)
 nb.weighted.neg <- mat2listw(nb.matrix.weighted.neg)
 
 
-# png(filename = "./output/covid_incidence/rates_of_change_correlation_neighbors.png", height = 7, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+png(filename = "./output/covid_incidence/rates_of_change_correlation_neighbors.png", height = 5.63, width = 10, units = "in", res = 300, pointsize = 12, family = "sans")
+
+par(mar = c(0,0,0,0), oma = c(0,0,0,0))
 plot(counties$geometry, border = "grey")
 plot(centroids, add=T)
 # plot(nb.weighted.neg, st_coordinates(centroids), lwd = 1, lty = 1, col="red", points = F, add=T)
@@ -256,7 +432,7 @@ plot(nb.weighted4, st_coordinates(centroids), lwd = 4, points = F, add=T)
 plot(nb.weighted6, st_coordinates(centroids), lwd = 8, lty = 1, points = F, add=T)
 plot(nb.weighted8, st_coordinates(centroids), lwd = 16, points = F, add=T)
 legend("bottomleft", lwd=c(1,4,8,16), legend = as.expression(lapply(c(0.0,0.4,0.6,0.8), function(x) bquote(rho>.(x)))), cex = 0.6, y.intersp = 2)
-# dev.off()
+dev.off()
 
 
 diag(roc.cor.mat0) <- 0
@@ -303,6 +479,14 @@ covid.weekly.wide <- covid.weekly[order(covid.weekly$county, covid.weekly$week),
   mutate(week.number = seq_along(county)) %>%
   select(-week) %>%
   pivot_wider(names_prefix = "week", names_from = "week.number", values_from = "total.cases")
+
+
+covid.weekly.wide <- covid.weekly.p100k[order(covid.weekly.p100k$county, covid.weekly.p100k$week),] %>%
+  group_by(county) %>%
+  mutate(week.number = seq_along(county)) %>%
+  select(-week, -pop2019) %>%
+  pivot_wider(names_prefix = "week", names_from = "week.number", values_from = "total.cases")
+
 
 cor.mat.by.week <- cor(covid.weekly.wide[,-1])
 

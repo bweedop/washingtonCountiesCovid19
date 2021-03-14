@@ -618,6 +618,74 @@ metadata$metapop <- ifelse(metadata$county%in%metapop.1, "mp1", "mp2")
 
 
 
+west <- c("SanJuan", "Whatcom", "Skagit", "Island", "Clallam", "Snohomish", "Jefferson", "Kitsap", "King", "GraysHarbor", "Mason", "Pierce", "Thurston", "Pacific", "Lewis", "Wahkiakum", "Cowlitz", "Skamania", "Clark")
+east1 <- c("Okanagon", "Chelan", "Douglas", "Kittitas")
+
+metadata$metapop <- ifelse(metadata$county%in%west, "west", ifelse(metadata$county%in%east1, "east1", "east2"))
+
+chosen.seq.df <- full_join(metadata, seq.df%>%mutate(date=as.Date(date)), by=c("ID", "county", "date")) %>%
+  filter(chosen==1) %>% 
+  mutate(seqID = paste0(">",paste(ID, county, date, sep="_"))) %>%
+  select(seqID, sequence)
+
+# chosen.seq.df <- full_join(metadata, seq.df%>%mutate(date=as.Date(date)), by=c("ID", "county", "date"))%>%mutate(seqID = paste0(">", paste(ID, county, date, metapop, sep="_")))%>%select(seqID, sequence)
+# write.table(chosen.seq.df, file="./data/processedData/subsample_metapop_east_west.fasta", sep="\n", col.names=FALSE, row.names=FALSE, quote=FALSE)
+
+
+
+
+metadata$metapop <- ifelse(metadata$county%in%west & !metadata$county%in%c("King", "Pierce"), "West", ifelse(metadata$county%in%c("King", "Pierce"), "mp1", "east"))
+
+
+chosen.seq.df <- full_join(metadata, seq.df%>%mutate(date=as.Date(date)), by=c("ID", "county", "date")) %>%
+  filter(chosen==1) %>% 
+  mutate(seqID = paste0(">",paste(ID, county, date, metapop, sep="_"))) %>%
+  select(seqID, sequence)
+
+
+# chosen.seq.df <- full_join(metadata, seq.df%>%mutate(date=as.Date(date)), by=c("ID", "county", "date"))%>%mutate(seqID = paste0(">", paste(ID, county, date, metapop, sep="_")))%>%select(seqID, sequence)
+# write.table(chosen.seq.df, file="./data/processedData/subsample_metapop_clust.fasta", sep="\n", col.names=FALSE, row.names=FALSE, quote=FALSE)
+
+
+
+west1 <- c("King", "Pierce")
+west2 <- c("Whatcom", "Skagit", "Snohomish", "Island", "SanJuan")
+west3 <- west[which(!west%in%c(west1, west2))]
+
+east1 <- c("Yakima", "Kittitas")
+east3 <- c("Asotin", "Spokane", "WallaWalla", "Columbia", "Garfield", "Whitman", "PendOreille")
+
+
+
+
+metadata$metapop <- ifelse(metadata$county%in%west1, "west1", 
+                           ifelse(metadata$county%in%west2, "west2", 
+                                  ifelse(metadata$county%in%west3, "west3", 
+                                         ifelse(metadata$county%in%east1, "east1", 
+                                                ifelse(metadata$county%in%east3, "east3", "east2")))))
+
+
+chosen.seq.df <- full_join(metadata, seq.df%>%mutate(date=as.Date(date)), by=c("ID", "county", "date")) %>%
+  filter(chosen==1) %>% 
+  mutate(seqID = paste0(">",paste(ID, county, date, metapop, sep="_"))) %>%
+  select(seqID, sequence)
+
+
+# chosen.seq.df <- full_join(metadata, seq.df%>%mutate(date=as.Date(date)), by=c("ID", "county", "date"))%>%mutate(seqID = paste0(">", paste(ID, county, date, metapop, sep="_")))%>%select(seqID, sequence)
+# write.table(chosen.seq.df, file="./data/processedData/subsample_metapop_clust2.fasta", sep="\n", col.names=FALSE, row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -627,7 +695,16 @@ metapop.categories <- data.frame(county = unique(counties$county)) %>%
                           mp.ew = ifelse(county2%in%west, "West", "East"), 
                           mp.roc1 = ifelse(county2%in%metapop1, "MP1", 
                                            ifelse(county2%in%metapop2, "MP2", "MP3")), 
-                          mp.roc2 = ifelse(county2%in%metapop.1, "MP1", "MP2")) %>%
+                          mp.roc2 = ifelse(county2%in%metapop.1, "MP1", "MP2"),
+                          mp.roc.ew = ifelse(county2%in%metapop1, "MP1", ifelse(county2%in%metapop2, "MP2", ifelse(county2%in%west, "West", "East"))), 
+                          mp.clust = ifelse(county2%in%west & !county2%in%c("King", "Pierce"), "West", ifelse(county2%in%c("King", "Pierce"), "MP1", "East")),
+                          mp.clust2 = ifelse(county2%in%west1, "West1", 
+                                             ifelse(county2%in%west2, "West2", 
+                                                    ifelse(county2%in%west3, "West3", 
+                                                           ifelse(county2%in%east1, "East1", 
+                                                                  ifelse(county2%in%east3, "East3", "East2")))))
+                          
+                          ) %>%
                         full_join(counties, by="county") %>%
                         st_sf()
 
@@ -675,6 +752,89 @@ par(mar=c(0,0,0,0))
 .image_scale_factor(c("", ""), col = viridis(2)[2:1], key.length = lcm(2), key.width = lcm(3), key.pos = 4)
 text(x=c(2.5,2.5), y=c(1, 2), labels = c("MP2", "MP1"), xpd=TRUE, cex=10/12)
 # dev.off()
+
+
+
+
+
+
+# png(filename = "./output/sequence_sampling/metapop_roc_cor_ew.png", height = 5, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(metapop.categories$geometry, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="West")], col = viridis(4)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="East")], col = viridis(4)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="MP2")], col = viridis(4)[3], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="MP1")], col = viridis(4)[4], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 0.5), add = TRUE, lwd = 2.5, border = "grey")
+par(mar=c(0,0,0,0))
+# .image_scale_factor(c("West", "East"), col = viridis(2), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+.image_scale_factor(c("", "", "", ""), col = viridis(4), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+text(x=c(2.5,2.5,2.5,2.5), y=c(1, 2, 3, 4), labels = c("West", "East", "MP2", "MP1"), xpd=TRUE, cex=10/12)
+# dev.off()
+
+
+
+
+
+
+# png(filename = "./output/sequence_sampling/metapop_clust.png", height = 5, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(metapop.categories$geometry, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust=="West")], col = viridis(3)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust=="East")], col = viridis(3)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust=="MP1")], col = viridis(3)[3], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 0.5), add = TRUE, lwd = 2.5, border = "grey")
+# plot(metapop.categories$geometry[which(metapop.categories$county2%in%metadata$county)], border = "grey", lwd = 2.5, add = T)
+par(mar=c(0,0,0,0))
+# .image_scale_factor(c("West", "East"), col = viridis(2), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+.image_scale_factor(c("", "", ""), col = viridis(3), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+text(x=c(2.5,2.5,2.5), y=c(1, 2, 3), labels = c("West", "East", "MP1"), xpd=TRUE, cex=10/12)
+# dev.off()
+
+
+
+
+
+
+# png(filename = "./output/sequence_sampling/metapop_clust2.png", height = 5, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(metapop.categories$geometry, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West1")], col = viridis(6)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West2")], col = viridis(6)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West3")], col = viridis(6)[3], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East1")], col = viridis(6)[4], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East2")], col = viridis(6)[5], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East3")], col = viridis(6)[6], add = TRUE, lwd = 2.5, border = "grey")
+
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 0.5), add = TRUE, lwd = 2.5, border = "grey")
+
+par(mar=c(0,0,0,0))
+# .image_scale_factor(c("West", "East"), col = viridis(2), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+.image_scale_factor(c("", "", "", "", "", ""), col = viridis(6), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+text(x=c(2.5,2.5,2.5,2.5,2.5,2.5), y=c(1, 2, 3, 4, 5, 6), labels = c("West1", "West2", "West3", "East1", "East2", "East3"), xpd=TRUE, cex=10/12)
+# dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
