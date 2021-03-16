@@ -409,7 +409,24 @@ save_as_image(satscan.example, path = "./output/covid_incidence/satscan/satscan_
 
 example.cluster <- c("Grant County", "Douglas County", "Adams County", "Franklin County", "Lincoln County", "Kittitas County", "Benton County", "Chelan County", "Yakima County")
 
-png("./output/covid_incidence/satscan/example_cluster.png", width = 8, height = 4.5, units = "in", res = 300)
+my.cluster.example <- individual.clusters.dfs[[18]][1,]
+
+cluster.counties <- strsplit(my.cluster.example$`Location IDs included`, split = ", ") %>% unlist() %>% gsub("County", " County", .)
+
+cluster.coordinates <- my.cluster.example$`Coordinates / radius` %>% gsub("\\((.*)\\)\\s.*", "\\1", .) %>% strsplit(split = ",") %>% unlist() %>% as.numeric()
+cluster.radius <- my.cluster.example$`Coordinates / radius` %>% gsub(".*\\s/\\s(.*)", "\\1", .) %>% as.numeric()
+
+
+# function by Gary Weissman on Stack overflow 
+## https://stackoverflow.com/questions/23071026/drawing-a-circle-with-a-radius-of-a-defined-distance-in-a-map
+plotCircle <- function(x, y, r) {
+  angles <- seq(0,2*pi,length.out=360)
+  points(x=x, y=y, pch = 8, cex = 2)
+  lines(r*cos(angles)+x,r*sin(angles)+y, lwd = 2, lty = 3)
+}
+
+
+# png("./output/covid_incidence/satscan/example_cluster.png", width = 8, height = 4.5, units = "in", res = 300)
 par(mar = c(0,0,0,0))
 plot(counties$geometry, border = "grey")
 plot(counties$geometry[which(counties$county%in%example.cluster)], col = rgb(1,0,0,0.8), border = "black", add = T)
@@ -419,7 +436,10 @@ text(x = st_coordinates(st_centroid(st_geometry(counties[which(counties$county%i
      labels = c("Adams", "Chelan"), 
      adj = 0.5, 
      cex = 1)
-dev.off()
+plotCircle(x=cluster.coordinates[1], y=cluster.coordinates[2], r=cluster.radius)
+
+
+# dev.off()
 
 example.adj.mat <- cluster.df[1:7,1:8]
 names(example.adj.mat)[1] <- " "

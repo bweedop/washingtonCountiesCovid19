@@ -16,6 +16,8 @@ lapply(my.packages, library, character.only=T)
 # read aggregate fasta file
 sequences <- readLines("./data/processedData/genbankSequences.noAmbiguous.mafftout.trimmed.fasta")
 
+sequences <- readLines("./data/processedData/subsample.fasta")
+
 ## parse individual sequences
 ### create dataframe with partitioned label and sequence 
 #### since sequences are massive, don't try to view in RStudio
@@ -652,7 +654,7 @@ west1 <- c("King", "Pierce")
 west2 <- c("Whatcom", "Skagit", "Snohomish", "Island", "SanJuan")
 west3 <- west[which(!west%in%c(west1, west2))]
 
-east1 <- c("Yakima", "Kittitas")
+east1.1 <- c("Yakima", "Kittitas")
 east3 <- c("Asotin", "Spokane", "WallaWalla", "Columbia", "Garfield", "Whitman", "PendOreille")
 
 
@@ -661,7 +663,7 @@ east3 <- c("Asotin", "Spokane", "WallaWalla", "Columbia", "Garfield", "Whitman",
 metadata$metapop <- ifelse(metadata$county%in%west1, "west1", 
                            ifelse(metadata$county%in%west2, "west2", 
                                   ifelse(metadata$county%in%west3, "west3", 
-                                         ifelse(metadata$county%in%east1, "east1", 
+                                         ifelse(metadata$county%in%east1.1, "east1", 
                                                 ifelse(metadata$county%in%east3, "east3", "east2")))))
 
 
@@ -701,7 +703,7 @@ metapop.categories <- data.frame(county = unique(counties$county)) %>%
                           mp.clust2 = ifelse(county2%in%west1, "West1", 
                                              ifelse(county2%in%west2, "West2", 
                                                     ifelse(county2%in%west3, "West3", 
-                                                           ifelse(county2%in%east1, "East1", 
+                                                           ifelse(county2%in%east1.1, "East1", 
                                                                   ifelse(county2%in%east3, "East3", "East2")))))
                           
                           ) %>%
@@ -829,37 +831,284 @@ text(x=c(2.5,2.5,2.5,2.5,2.5,2.5), y=c(1, 2, 3, 4, 5, 6), labels = c("West1", "W
 
 
 
+getwd()
+
+
+b.ew <- read.delim(file = "./Phylodynamics/results-200M/BSSVS/EW-results-200M.tsv", sep = "\t") %>% mutate_if(is.character, ~toupper(trimws(.)))
+b.cor.ew <- read.delim(file = "./Phylodynamics/results-200M/BSSVS/corEW-results-200M.tsv", sep = "\t") %>% mutate_if(is.character, ~toupper(trimws(.)))
+b.clust2 <- read.delim(file = "./Phylodynamics/results-200M/BSSVS/clust2-results-200M.tsv", sep = "\t") %>% mutate_if(is.character, ~toupper(trimws(.)))
 
 
 
+metapop.categories$has.seqs <- ifelse(metapop.categories$county2%in%metadata$county, 1, 0)
 
 
+wa.ew <- metapop.categories %>% group_by(mp.ew, has.seqs) %>% summarise(geometry=st_combine(geometry))
+# wa.ew2 <- metapop.categories %>% group_by(mp.ew) %>% summarise(geometry=st_centroid(st_union(geometry)))
+# wa.roc.cor <- metapop.categories %>% group_by(mp.roc1) %>% summarise(geometry = st_combine(geometry))
+# wa.roc.cor2 <- metapop.categories %>% group_by(mp.roc2) %>% summarise(geometry = st_combine(geometry))
+
+wa.roc.cor.ew <- metapop.categories %>% group_by(mp.roc.ew, has.seqs) %>% summarise(geometry = st_combine(geometry))
+
+wa.clust2 <- metapop.categories %>% group_by(mp.clust2, has.seqs) %>% summarise(geometry = st_combine(geometry))
 
 
-
-
-wa.ew <- metapop.categories %>% group_by(mp.ew) %>% summarise(geometry=st_combine(geometry))
-wa.ew2 <- metapop.categories %>% group_by(mp.ew) %>% summarise(geometry=st_centroid(st_union(geometry)))
-wa.roc.cor <- metapop.categories %>% group_by(mp.roc1) %>% summarise(geometry = st_combine(geometry))
-wa.roc.cor2 <- metapop.categories %>% group_by(mp.roc2) %>% summarise(geometry = st_combine(geometry))
-
-
-wa.ew.centroids <- st_centroid(st_geometry(wa.ew))
-
+wa.ew.centroids <- st_centroid(st_geometry(wa.ew%>%filter(has.seqs==1)))
 wa.ew.centroids.coords <- st_coordinates(wa.ew.centroids)
 
+wa.roc.cor.ew.centroids <- st_centroid(st_geometry(wa.roc.cor.ew%>%filter(has.seqs==1)))
+wa.roc.cor.ew.centroids.coords <- st_coordinates(wa.roc.cor.ew.centroids)
+
+wa.clust2.centroids <- st_centroid(st_geometry(wa.clust2%>%filter(has.seqs==1)))
+wa.clust2.centroids.coords <- st_coordinates(wa.clust2.centroids)
 
 
+
+ft.ew <- full_join(
+            full_join(
+              b.ew, 
+              cbind(mp = {wa.ew$mp.ew%>%toupper()}[which(wa.ew$has.seqs==1)], wa.ew.centroids.coords)%>%as.data.frame(), 
+              by = c("From" = "mp")),
+            cbind(mp = {wa.ew$mp.ew%>%toupper()}[which(wa.ew$has.seqs==1)], wa.ew.centroids.coords)%>%as.data.frame(), 
+            by = c("To" = "mp"), 
+            suffix = c(".from", ".to")
+            ) %>% 
+            filter(BAYES_FACTOR>3)
+ft.ew$med.lwd <- if(is.na(sd(ft.ew$median))){
+  4
+}else{
+  ((ft.ew$median-mean(ft.ew$median))/sd(ft.ew$median)*2)+abs(min((ft.ew$median-mean(ft.ew$median))/sd(ft.ew$median)*2))+1
+}        
+
+
+ft.roc.cor.ew <- full_join(
+  full_join(
+    b.cor.ew, 
+    cbind(mp = {wa.roc.cor.ew$mp.roc.ew%>%toupper()}[which(wa.roc.cor.ew$has.seqs==1)], wa.roc.cor.ew.centroids.coords)%>%as.data.frame(), 
+    by = c("From" = "mp")),
+  cbind(mp = {wa.roc.cor.ew$mp.roc.ew%>%toupper()}[which(wa.roc.cor.ew$has.seqs==1)], wa.roc.cor.ew.centroids.coords)%>%as.data.frame(), 
+  by = c("To" = "mp"), 
+  suffix = c(".from", ".to")
+) %>% 
+  filter(BAYES_FACTOR>3) 
+
+ft.roc.cor.ew$med.lwd <- if(is.na(sd(ft.roc.cor.ew$median))){
+  4
+}else{
+  ((ft.roc.cor.ew$median-mean(ft.roc.cor.ew$median))/sd(ft.roc.cor.ew$median)*2)+abs(min((ft.roc.cor.ew$median-mean(ft.roc.cor.ew$median))/sd(ft.roc.cor.ew$median)*2))+1
+}
+
+
+
+ft.clust2 <- full_join(
+  full_join(
+    b.clust2, 
+    cbind(mp = {wa.clust2$mp.clust2%>%toupper()}[which(wa.clust2$has.seqs==1)], wa.clust2.centroids.coords)%>%as.data.frame(), 
+    by = c("From" = "mp")),
+  cbind(mp = {wa.clust2$mp.clust2%>%toupper()}[which(wa.clust2$has.seqs==1)], wa.clust2.centroids.coords)%>%as.data.frame(), 
+  by = c("To" = "mp"), 
+  suffix = c(".from", ".to")
+) %>% 
+  filter(BAYES_FACTOR>4) 
+ft.clust2$med.lwd <- if(is.na(sd(ft.clust2$median))){
+  4
+}else{
+    ((ft.clust2$median-mean(ft.clust2$median))/sd(ft.clust2$median)*2)+abs(min((ft.clust2$median-mean(ft.clust2$median))/sd(ft.clust2$median)*2))+1
+}
+
+library(diagram)
+
+
+png(filename = "./output/sequence_sampling/metapop_ew_tr2.png", height = 5.63, width = 10, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
 plot(wa.ew$geometry, border="grey")
-plot(wa.ew["mp.ew"], col=viridis(2), add=T)
-plot(wa.ew.centroids, pch=16, col="white", add=T, cex=2)
-curvedarrow(wa.ew.centroids.coords[1,],wa.ew.centroids.coords[2,], lwd=2, lty=1, lcol="white", curve=0.1, arr.pos = 0.9)
+# plot(wa.ew["mp.ew"], col=viridis(2), add=T, border = "grey", lwd = 2.5)
+plot(wa.ew$geometry[which(wa.ew$mp.ew=="West")], col = viridis(2)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(wa.ew$geometry[which(wa.ew$mp.ew=="East")], col = viridis(2)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 1), add = TRUE, lwd = 2.5, border = "grey")
+
+plot(wa.ew.centroids, pch=19, col="white", add=T, cex=2)
+
+# points(wa.ew.centroids.coords[1,1], wa.ew.centroids.coords[1,2], col = "white", pch = 19, cex = 2)
+# points(wa.ew.centroids.coords[1,1], wa.ew.centroids.coords[1,2], col = viridis(2)[2], pch = 19, cex = 1)
+# 
+# points(wa.ew.centroids.coords[2,1], wa.ew.centroids.coords[2,2], col = "white", pch = 19, cex = 2)
+# points(wa.ew.centroids.coords[2,1], wa.ew.centroids.coords[2,2], col = viridis(2)[1], pch = 19, cex = 1)
+
+curvedarrow(ft.ew[,which(grepl(".from", names(ft.ew)))]%>%as.numeric(), ft.ew[,which(grepl(".to", names(ft.ew)))]%>%as.numeric(), lwd = ft.ew$med.lwd, lty = 1, lcol = "white", curve = 0.1, arr.pos = 0.8, segment = c(0.2, 0.8))
+par(mar=c(0,0,0,2.1))
+.image_scale_factor(c("", "", ""), col = c(viridis(2), rgb(220/255, 220/255, 220/255, alpha = 1)), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+text(x=c(2,2,2), y=c(1, 2, 3), labels = c("West", "East", "No Seqs"), xpd=TRUE, cex=10/12, adj = 0)
+
+
+dev.off()
+
+
+
+
+# png(filename = "./output/sequence_sampling/metapop_east_west.png", height = 5, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(metapop.categories$geometry, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.ew=="West")], col = viridis(2)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.ew=="East")], col = viridis(2)[2], add = TRUE, lwd = 2.5, border = "grey")
+par(mar=c(0,0,0,0))
+# .image_scale_factor(c("West", "East"), col = viridis(2), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+.image_scale_factor(c("", ""), col = viridis(2), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+text(x=c(2.5,2.5), y=c(1, 2), labels = c("West", "East"), xpd=TRUE, cex=10/12)
+# dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+png(filename = "./output/sequence_sampling/metapop_roc_ew_tr2.png", height = 5.63, width = 10, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(wa.roc.cor.ew$geometry, border="grey")
+
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="West")], col = viridis(4)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="East")], col = viridis(4)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="MP2")], col = viridis(4)[3], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="MP1")], col = viridis(4)[4], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 1), add = TRUE, lwd = 2.5, border = "grey")
+
+plot(wa.roc.cor.ew.centroids, pch=16, col="white", add=T, cex=2)
+
+for(i in 1:nrow(ft.roc.cor.ew)){
+curvedarrow(ft.roc.cor.ew[i,which(grepl(".from", names(ft.roc.cor.ew)))]%>%as.numeric(), ft.roc.cor.ew[i,which(grepl(".to", names(ft.roc.cor.ew)))]%>%as.numeric(), lwd = ft.roc.cor.ew$med.lwd[i], lty = 1, lcol = "white", curve = 0.25-0.05*i, arr.pos = 0.9, segment = c(0.1, 0.9))
+}
+
+.image_scale_factor(c("", "", "", "", ""), col = c(viridis(4), rgb(220/255, 220/255, 220/255, alpha = 1)), key.length = lcm(4), key.width = lcm(3), key.pos = 4)
+text(x=c(2,2,2,2,2), y=c(1, 2, 3, 4, 5), labels = c("West", "East", "MP2", "MP1", "No Seqs"), xpd=TRUE, cex=10/12, adj = 0)
+
+
+dev.off()
+
+
+
+
+
+
+# png(filename = "./output/sequence_sampling/metapop_roc_cor_ew.png", height = 5, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(metapop.categories$geometry, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="West")], col = viridis(4)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="East")], col = viridis(4)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="MP2")], col = viridis(4)[3], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.roc.ew=="MP1")], col = viridis(4)[4], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 0.5), add = TRUE, lwd = 2.5, border = "grey")
+par(mar=c(0,0,0,0))
+# .image_scale_factor(c("West", "East"), col = viridis(2), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+.image_scale_factor(c("", "", "", ""), col = viridis(4), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+text(x=c(2.5,2.5,2.5,2.5), y=c(1, 2, 3, 4), labels = c("West", "East", "MP2", "MP1"), xpd=TRUE, cex=10/12)
+# dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+png(filename = "./output/sequence_sampling/metapop_clust2_tr2.png", height = 5.63, width = 10, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(wa.clust2$geometry, border="grey")
+
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West1")], col = viridis(6)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West2")], col = viridis(6)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West3")], col = viridis(6)[3], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East1")], col = viridis(6)[4], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East2")], col = viridis(6)[5], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East3")], col = viridis(6)[6], add = TRUE, lwd = 2.5, border = "grey")
+
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 1), add = TRUE, lwd = 2.5, border = "grey")
+
+plot(wa.clust2.centroids, pch=16, col="white", add=T, cex=2)
+
+for(i in 1:nrow(ft.clust2)){
+  curvedarrow(ft.clust2[i,which(grepl(".from", names(ft.clust2)))]%>%as.numeric(), ft.clust2[i,which(grepl(".to", names(ft.clust2)))]%>%as.numeric(), lwd = ft.clust2$med.lwd[i], lty = 1, lcol = "white", curve = 0.1+0.05*i, arr.pos = 0.9, segment = c(0.1, 0.9))
+}
+
+.image_scale_factor(c("", "", "", "", "", "", ""), col = c(viridis(6), rgb(220/255, 220/255, 220/255, alpha = 1)), key.length = lcm(6), key.width = lcm(3), key.pos = 4)
+text(x=c(2,2,2,2,2,2,2), y=c(1, 2, 3, 4, 5, 6,7), labels = c("West1", "West2", "West3", "East1", "East2", "East3", "No Seqs"), xpd=TRUE, cex=10/12, adj = 0)
+
+
+dev.off()
+
+
+
+# png(filename = "./output/sequence_sampling/metapop_clust2.png", height = 5, width = 7, units = "in", res = 300, pointsize = 12, family = "sans")
+
+layout(matrix(1:2, ncol = 2), widths = c(1, lcm(3)))
+par(mar=c(0,0,0,0))
+plot(metapop.categories$geometry, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West1")], col = viridis(6)[1], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West2")], col = viridis(6)[2], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="West3")], col = viridis(6)[3], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East1")], col = viridis(6)[4], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East2")], col = viridis(6)[5], add = TRUE, lwd = 2.5, border = "grey")
+plot(metapop.categories$geometry[which(metapop.categories$mp.clust2=="East3")], col = viridis(6)[6], add = TRUE, lwd = 2.5, border = "grey")
+
+plot(metapop.categories$geometry[which(!metapop.categories$county2%in%metadata$county)], col = rgb(220/255, 220/255, 220/255, alpha = 0.5), add = TRUE, lwd = 2.5, border = "grey")
+
+par(mar=c(0,0,0,0))
+# .image_scale_factor(c("West", "East"), col = viridis(2), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+.image_scale_factor(c("", "", "", "", "", ""), col = viridis(6), key.length = lcm(2), key.width = lcm(3), key.pos = 4)
+text(x=c(2.5,2.5,2.5,2.5,2.5,2.5), y=c(1, 2, 3, 4, 5, 6), labels = c("West1", "West2", "West3", "East1", "East2", "East3"), xpd=TRUE, cex=10/12)
+# dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # self arrows
+# this one doesnt work
 # selfarrow(wa.ew.centroids.coords[1,], lwd=2, lty=1, lcol="white", path = "R", arr.length = 2, curve = c(1,1))
-curvedarrow(ew.centroids[2,],ew.centroids[1,], lwd=4, lty=1, lcol="white", arr.col="white", curve=0.1, arr.pos =0.9, arr.type = "triangle")
 
-curvedarrow(wa.ew.centroids.coords[1,], wa.ew.centroids.coords[1,]+0.1*wa.ew.centroids.coords[1,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 2/3, arr.type = "triangle")
-curvedarrow(wa.ew.centroids.coords[1,]+0.1*wa.ew.centroids.coords[1,], wa.ew.centroids.coords[1,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 1/3, arr.type = "triangle")
-
-
-curvedarrow(wa.ew.centroids.coords[2,], wa.ew.centroids.coords[2,]-0.1*wa.ew.centroids.coords[2,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 2/3, arr.type = "triangle")
-curvedarrow(wa.ew.centroids.coords[2,]-0.1*wa.ew.centroids.coords[2,], wa.ew.centroids.coords[2,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 1/3, arr.type = "triangle")
+# curvedarrow(wa.ew.centroids.coords[1,], wa.ew.centroids.coords[1,]+0.1*wa.ew.centroids.coords[1,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 2/3, arr.type = "triangle")
+# curvedarrow(wa.ew.centroids.coords[1,]+0.1*wa.ew.centroids.coords[1,], wa.ew.centroids.coords[1,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 1/3, arr.type = "triangle")
+# 
+# 
+# curvedarrow(wa.ew.centroids.coords[2,], wa.ew.centroids.coords[2,]-0.1*wa.ew.centroids.coords[2,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 2/3, arr.type = "triangle")
+# curvedarrow(wa.ew.centroids.coords[2,]-0.1*wa.ew.centroids.coords[2,], wa.ew.centroids.coords[2,], lwd = 2, lty = 2, lcol="white", curve = 0.5, arr.pos = 1/3, arr.type = "triangle")
