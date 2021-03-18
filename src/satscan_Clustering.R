@@ -88,7 +88,7 @@ for(i in 1:length(individual.clusters)){
 all.clusters.df <- bind_rows(individual.clusters.dfs) %>% mutate("Cluster Size" = NA) %>% select(week, "Cluster Number", "Cluster Size", everything())
 all.clusters.df$`Cluster Size` <- sapply(all.clusters.df$`Location IDs included`, function(x){length(unlist(strsplit(x, split=", ")))})
 
-
+write.csv(all.clusters.df, file = "./output/covid_incidence/satscan/satscan_clusters.csv")
 
 
       # 
@@ -130,7 +130,7 @@ for(i in 1:length(county.names)){
 cluster.df[1:5,]
 ncol(cluster.df)
 
-
+write.csv(cluster.df, file = "./output/covid_incidence/satscan/clusters_adj_mat.csv")
 
 # high risk clusters, all weeks
 

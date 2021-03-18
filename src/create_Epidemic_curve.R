@@ -362,11 +362,13 @@ rates.of.change[,2:40] <- rbind(rep(NA, length(2:40)), rates.of.change[-1,2:40] 
 
 rates.of.change %<>% mutate_at(2:40, function(x){ifelse(is.infinite(x) | is.nan(x), NA, x)})
 
+write.csv(rates.of.change, file = "./output/covid_incidence/roc.csv")
 
 
 
 roc.cor.mat <- cor(rates.of.change[,2:40], use = "pairwise.complete.obs")
 
+write.csv(roc.cor.mat, file = "./output/covid_incidence/roc_corr_mat.csv")
 
 roc.cor.mat95 <- roc.cor.mat
 roc.cor.mat95[which(roc.cor.mat95<0.95)] <- 0
@@ -406,7 +408,12 @@ plot(neighbors.list, centroids , add=T)
 
 nb.matrix <- nb2mat(neighbors.list, style = "B")
 
+roc.cor.mat.nb <- nb.matrix*roc.cor.mat
+rownames(roc.cor.mat.nb) <- rownames(roc.cor.mat)
+colnames(roc.cor.mat.nb) <- colnames(roc.cor.mat)
 
+
+write.csv(roc.cor.mat.nb, file = "./output/covid_incidence/roc_corr_mat_nb.csv")
 
 nb.matrix.weighted8 <- nb.matrix*roc.cor.mat8
 nb.matrix.weighted6 <- nb.matrix*roc.cor.mat6
@@ -510,6 +517,7 @@ for(i in 2:ncol(covid.weekly.wide)){
 
 morans.i.results <- data.frame(week = covid.weekly.wide.by.county$week, morans.i = sapply(morans.i.results, pluck, "statistic"), p = sapply(morans.i.results, pluck, "p.value"))
 
+write.csv(morans.i.results, file = "./output/covid_incidence/moran_i.csv")
 
 
 
